@@ -13,16 +13,6 @@ app.use(coffee({ src: __dirname + '/views' }));
 
 server.listen(8080);
 
-var usernames = {};
-
-// function addUser(username) {
-//   usernames[username] = username;
-// }
-
-// function removeUser(username) {
-//   delete usernames[username];
-// }
-
 function wrapEvent(socket, name, value) {
   var result = {};
   result['socket'] = socket;
@@ -34,31 +24,15 @@ function socketEvent(name, key, socket) {
   return bacon.fromEventTarget(socket, name).map(wrapEvent, socket, key);
 }
 
+function broadcast(data) {
+  var buffer = data.buffer,
+      socket = data.socket;
+
+  return socket.broadcast.emit('buffer-from-server', buffer);
+}
+
 var connections = bacon.fromEventTarget(io.sockets, 'connection');
 var disconnects = connections.map(bacon.fromEventTarget, 'disconnect');
 var buffers     = connections.flatMap(socketEvent, 'buffer-from-client', 'buffer');
 
-connections.onValue(function(socket) {
-  console.log('hihi');
-});
-
-disconnects.onValue(function(socket) {
-  console.log('byebye');
-});
-
-buffers.onValue(function(data) {
-  var buffer = data.buffer,
-      socket = data.socket;
-
-  socket.broadcast.emit('buffer-from-server', buffer);
-});
-
-// disconnects.onValue(function(socket) {
-//   console.log('sorry to see you go :(');
-// });
-
-// io.on('connection', function (socket) {
-//   socket.username = uuid.v4();
-//   addUser(socket.username);
-//   io.emit('welcome', 'Hi there ' + socket.username + '!!!');
-// });
+buffers.assign(broadcast);

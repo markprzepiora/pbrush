@@ -38,20 +38,16 @@ myFramesJSON = myFrames.map(JSON.stringify)
 myFramesJSON.assign($('.js-buffer'), 'text')
 myFramesJSON.map('.length').scan(0, add).assign($('.js-bytes'), 'text')
 
-# The resulting lines stream.
-lines = myFrames.flatMap(Bacon.fromArray)
+fromSocketEventTarget = (socket, event) ->
+  Bacon.fromBinder (handler) ->
+    socket.on(event, handler)
+    -> socket.off(event, handler)
 
-myLines.assign(draw)
+socket       = io('/')
+remoteFrames = fromSocketEventTarget(socket, 'buffer-from-server')
+remoteLines  = remoteFrames.flatMap(Bacon.fromArray)
+lines        = myLines.merge(remoteLines)
 
+lines.assign(draw)
 
-
-socket = io.connect('/')
-
-socket.on 'welcome', (data) ->
-  console.log(data)
-
-socket.on 'connect', (data) ->
-  socket.emit 'buffer-from-client', [[ [1,1], [100,100] ]]
-
-socket.on 'buffer-from-server', (data) ->
-  alert data
+myFrames.assign(socket.emit.bind(socket), 'buffer-from-client')
