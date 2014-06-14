@@ -1,12 +1,10 @@
 Painter = (canvas) ->
   context = canvas.getContext("2d")
 
-  # Clear the buffer
   clear = ->
     context.fillStyle = "rgb(0, 0, 0)"
     context.fillRect(0, 0, canvas.width, canvas.height)
 
-  # Draw a line from start to end
   draw = ([start, end]) ->
     context.beginPath()
     context.lineWidth = 2
@@ -53,17 +51,3 @@ PaintSocket = (myLines) ->
   { remoteLines }
 
 controller = PaintBrushController($('#canvas-container'))
-
-# add = (a, b) -> a + b
-
-# myLines.map(1).scan(0, add).throttle(32)
-#   .assign($('.js-lines-count'), 'text')
-
-# Creates buffers of lines... these are for example something we can
-# give an ID and send across the wire.
-
-# myFrames.map(1).scan(0, add).throttle(32)
-#   .assign($('.js-buffers-count'), 'text')
-
-# myFramesJSON = myFrames.map(JSON.stringify)
-# myFramesJSON.map('.length').scan(0, add).assign($('.js-bytes'), 'text')
