@@ -11,7 +11,7 @@ var express = require('express'),
 app.use(static(__dirname + '/views'));
 app.use(coffee({ src: __dirname + '/views' }));
 
-server.listen(8080);
+server.listen(process.env.PORT || 5000);
 
 function wrapEvent(socket, name, value) {
   var result = {};
