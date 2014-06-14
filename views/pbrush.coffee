@@ -1,3 +1,8 @@
+hammerStream = (element, event) ->
+  Bacon.fromBinder (sink) ->
+    Hammer(element).on(event, sink)
+    -> Hammer(element).off(event, sink)
+
 Painter = (canvas) ->
   context = canvas.getContext("2d")
 
@@ -16,12 +21,13 @@ Painter = (canvas) ->
   { clear, draw }
 
 MyLines = (canvas) ->
-  toCoords = ({ clientX, clientY }) ->
+  toCoords = ({ gesture: { center: { pageX, pageY } } }) ->
     { offsetLeft, offsetTop } = canvas
-    [clientX - offsetLeft, clientY - offsetTop]
-  mouseDown  = $(canvas).asEventStream("mousedown").doAction(".preventDefault")
-  mouseUp    = $(document).asEventStream("mouseup").doAction(".preventDefault")
-  mouseMoves = $(document).asEventStream("mousemove").throttle(8).map(toCoords)
+    [pageX - offsetLeft, pageY - offsetTop]
+
+  mouseDown = hammerStream(canvas, 'dragstart').doAction('.preventDefault')
+  mouseUp = hammerStream(document, 'dragend').doAction('.preventDefault')
+  mouseMoves = hammerStream(document, 'drag').doAction('.gesture.preventDefault').throttle(8).map(toCoords)
 
   mouseDown.flatMap ->
     mouseMoves.slidingWindow(2,2).takeUntil(mouseUp)
