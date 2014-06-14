@@ -18,7 +18,7 @@ draw = ([start, end]) ->
 
 mouseDown  = $(canvas).asEventStream("mousedown").doAction(".preventDefault")
 mouseUp    = $(document).asEventStream("mouseup").doAction(".preventDefault")
-mouseMoves = $(document).asEventStream("mousemove").throttle(16).map(toCoords)
+mouseMoves = $(document).asEventStream("mousemove").throttle(8).map(toCoords)
 
 myLines = mouseDown.flatMap ->
   mouseMoves.slidingWindow(2,2).takeUntil(mouseUp)
@@ -28,14 +28,14 @@ myLines.map(1).scan(0, add).throttle(32)
 
 # Creates buffers of lines... these are for example something we can
 # give an ID and send across the wire.
-myFrames = myLines.bufferWithTime(100)
+myFrames = myLines.bufferWithTime(32)
 
 myFrames.map(1).scan(0, add).throttle(32)
   .assign($('.js-buffers-count'), 'text')
 
 myFramesJSON = myFrames.map(JSON.stringify)
 
-myFramesJSON.assign($('.js-buffer'), 'text')
+# myFramesJSON.assign($('.js-buffer'), 'text')
 myFramesJSON.map('.length').scan(0, add).assign($('.js-bytes'), 'text')
 
 fromSocketEventTarget = (socket, event) ->
@@ -50,4 +50,4 @@ lines        = myLines.merge(remoteLines)
 
 lines.assign(draw)
 
-myFrames.assign(socket.emit.bind(socket), 'buffer-from-client')
+myFrames.assign(socket, 'emit', 'buffer-from-client')
