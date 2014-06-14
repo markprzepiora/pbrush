@@ -26,7 +26,7 @@ MyLines = (canvas) ->
   mouseDown.flatMap ->
     mouseMoves.slidingWindow(2,2).takeUntil(mouseUp)
 
-PaintSocket = (myLines) ->
+PaintSocket = (myLines, myClear) ->
   fromSocketEventTarget = (socket, event) ->
     Bacon.fromBinder (handler) ->
       socket.on(event, handler)
@@ -36,18 +36,22 @@ PaintSocket = (myLines) ->
   myFrames     = myLines.bufferWithTime(32)
   remoteFrames = fromSocketEventTarget(socket, 'buffer-from-server')
   remoteLines  = remoteFrames.flatMap(Bacon.fromArray)
+  remoteClear  = fromSocketEventTarget(socket, 'clear-from-server')
 
   myFrames.assign(socket, 'emit', 'buffer-from-client')
+  myClear.assign(socket, 'emit', 'clear-from-client')
 
-  { remoteLines }
+  { remoteLines, remoteClear }
 
 @PaintBrushController = ($container) ->
   canvas      = $container.find('canvas').get(0)
-  painter     = Painter(canvas)
+  myClear     = $container.find('.js-clear').asEventStream('click').map(true)
   myLines     = MyLines(canvas)
-  paintSocket = PaintSocket(myLines)
-  remoteLines = paintSocket.remoteLines
-  lines       = myLines.merge(remoteLines)
+  paintSocket = PaintSocket(myLines, myClear)
+  painter     = Painter(canvas)
+  clear       = myClear.merge(paintSocket.remoteClear)
+  lines       = myLines.merge(paintSocket.remoteLines)
 
   painter.clear()
   lines.assign(painter.draw)
+  clear.assign(painter.clear)

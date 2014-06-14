@@ -24,15 +24,17 @@ function socketEvent(name, key, socket) {
   return bacon.fromEventTarget(socket, name).map(wrapEvent, socket, key);
 }
 
-function broadcast(data) {
+function broadcast(event, data) {
   var buffer = data.buffer,
       socket = data.socket;
 
-  return socket.broadcast.emit('buffer-from-server', buffer);
+  return socket.broadcast.emit(event, buffer);
 }
 
 var connections = bacon.fromEventTarget(io.sockets, 'connection');
 var disconnects = connections.map(bacon.fromEventTarget, 'disconnect');
 var buffers     = connections.flatMap(socketEvent, 'buffer-from-client', 'buffer');
+var clear       = connections.flatMap(socketEvent, 'clear-from-client', 'clear');
 
-buffers.assign(broadcast);
+buffers.assign(broadcast, 'buffer-from-server');
+clear.assign(broadcast,   'clear-from-server');
