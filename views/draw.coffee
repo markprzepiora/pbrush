@@ -42,3 +42,9 @@ myFramesJSON.map('.length').scan(0, add).assign($('.js-bytes'), 'text')
 lines = myFrames.flatMap(Bacon.fromArray)
 
 myLines.assign(draw)
+
+
+
+socket = io.connect('/')
+socket.on 'welcome', (data) ->
+  console.log(data)
