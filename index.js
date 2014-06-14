@@ -49,6 +49,8 @@ disconnects.onValue(function(socket) {
 buffers.onValue(function(data) {
   var buffer = data.buffer,
       socket = data.socket;
+
+  socket.broadcast.emit('buffer-from-server', buffer);
 });
 
 // disconnects.onValue(function(socket) {
