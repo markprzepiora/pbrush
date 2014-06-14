@@ -13,7 +13,33 @@ app.use(coffee({ src: __dirname + '/views' }));
 
 server.listen(8080);
 
-io.on('connection', function (socket) {
-  console.log(socket.constructor);
-  io.emit('welcome', 'Hi there!!!');
+var usernames = {};
+
+function addUser(username) {
+  usernames[username] = username;
+}
+
+function removeUser(username) {
+  delete usernames[username];
+}
+
+var connections = bacon.fromEventTarget(io.sockets, 'connection');
+var disconnects = connections.map(bacon.fromEventTarget, 'disconnect');
+
+connections.onValue(function(socket) {
+  console.log('hihi');
 });
+
+disconnects.onValue(function(socket) {
+  console.log('byebye');
+});
+
+// disconnects.onValue(function(socket) {
+//   console.log('sorry to see you go :(');
+// });
+
+// io.on('connection', function (socket) {
+//   socket.username = uuid.v4();
+//   addUser(socket.username);
+//   io.emit('welcome', 'Hi there ' + socket.username + '!!!');
+// });
