@@ -1,20 +1,26 @@
-canvas = document.getElementById("canvas")
-g      = canvas.getContext("2d")
+CanvasController = (canvas) ->
+  context = canvas.getContext("2d")
 
-g.fillStyle = "rgb(0, 0, 0)"
-g.fillRect(0, 0, canvas.width, canvas.height)
+  clear = ->
+    context.fillStyle = "rgb(0, 0, 0)"
+    context.fillRect(0, 0, canvas.width, canvas.height)
+
+  draw = ([start, end]) ->
+    context.beginPath()
+    context.lineWidth = 2
+    context.strokeStyle = "rgb(255, 255, 255)"
+    context.moveTo(start...)
+    context.lineTo(end...)
+    context.stroke()
+
+  { clear, draw }
+
+controller = CanvasController(document.getElementById("canvas"))
+controller.clear()
 
 toCoords = (e) -> [e.clientX - 7, e.clientY - 52]
 
 add = (a,b) -> a+b
-
-draw = ([start, end]) ->
-  g.beginPath()
-  g.lineWidth = 2
-  g.strokeStyle = "rgb(255, 255, 255)"
-  g.moveTo(start...)
-  g.lineTo(end...)
-  g.stroke()
 
 mouseDown  = $(canvas).asEventStream("mousedown").doAction(".preventDefault")
 mouseUp    = $(document).asEventStream("mouseup").doAction(".preventDefault")
@@ -48,6 +54,6 @@ remoteFrames = fromSocketEventTarget(socket, 'buffer-from-server')
 remoteLines  = remoteFrames.flatMap(Bacon.fromArray)
 lines        = myLines.merge(remoteLines)
 
-lines.assign(draw)
+lines.assign(controller.draw)
 
 myFrames.assign(socket, 'emit', 'buffer-from-client')
