@@ -15,16 +15,28 @@ server.listen(8080);
 
 var usernames = {};
 
-function addUser(username) {
-  usernames[username] = username;
+// function addUser(username) {
+//   usernames[username] = username;
+// }
+
+// function removeUser(username) {
+//   delete usernames[username];
+// }
+
+function wrapEvent(socket, name, value) {
+  var result = {};
+  result['socket'] = socket;
+  result[name]     = value;
+  return result;
 }
 
-function removeUser(username) {
-  delete usernames[username];
+function socketEvent(name, key, socket) {
+  return bacon.fromEventTarget(socket, name).map(wrapEvent, socket, key);
 }
 
 var connections = bacon.fromEventTarget(io.sockets, 'connection');
 var disconnects = connections.map(bacon.fromEventTarget, 'disconnect');
+var buffers     = connections.flatMap(socketEvent, 'buffer-from-client', 'buffer');
 
 connections.onValue(function(socket) {
   console.log('hihi');
@@ -32,6 +44,11 @@ connections.onValue(function(socket) {
 
 disconnects.onValue(function(socket) {
   console.log('byebye');
+});
+
+buffers.onValue(function(data) {
+  var buffer = data.buffer,
+      socket = data.socket;
 });
 
 // disconnects.onValue(function(socket) {

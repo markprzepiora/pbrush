@@ -48,3 +48,5 @@ myLines.assign(draw)
 socket = io.connect('/')
 socket.on 'welcome', (data) ->
   console.log(data)
+socket.on 'connect', (data) ->
+  socket.emit 'buffer-from-client', [[ [1,1], [100,100] ]]
