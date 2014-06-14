@@ -14,3 +14,6 @@ app.listen(8080);
 app.get('/foo', function (req, res) {
   res.send('hello world');
 });
+
+// io.on('connection', function (socket) {
+// });
