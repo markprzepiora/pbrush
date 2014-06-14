@@ -16,7 +16,9 @@ Painter = (canvas) ->
   { clear, draw }
 
 MyLines = (canvas) ->
-  toCoords   = (e) -> [e.clientX - 7, e.clientY - 52]
+  toCoords = ({ clientX, clientY }) ->
+    { offsetLeft, offsetTop } = canvas
+    [clientX - offsetLeft, clientY - offsetTop]
   mouseDown  = $(canvas).asEventStream("mousedown").doAction(".preventDefault")
   mouseUp    = $(document).asEventStream("mouseup").doAction(".preventDefault")
   mouseMoves = $(document).asEventStream("mousemove").throttle(8).map(toCoords)
@@ -24,7 +26,22 @@ MyLines = (canvas) ->
   mouseDown.flatMap ->
     mouseMoves.slidingWindow(2,2).takeUntil(mouseUp)
 
-PaintBrushController = ($container) ->
+PaintSocket = (myLines) ->
+  fromSocketEventTarget = (socket, event) ->
+    Bacon.fromBinder (handler) ->
+      socket.on(event, handler)
+      -> socket.off(event, handler)
+
+  socket       = io('/')
+  myFrames     = myLines.bufferWithTime(32)
+  remoteFrames = fromSocketEventTarget(socket, 'buffer-from-server')
+  remoteLines  = remoteFrames.flatMap(Bacon.fromArray)
+
+  myFrames.assign(socket, 'emit', 'buffer-from-client')
+
+  { remoteLines }
+
+@PaintBrushController = ($container) ->
   canvas      = $container.find('canvas').get(0)
   painter     = Painter(canvas)
   myLines     = MyLines(canvas)
@@ -34,20 +51,3 @@ PaintBrushController = ($container) ->
 
   painter.clear()
   lines.assign(painter.draw)
-
-PaintSocket = (myLines) ->
-  fromSocketEventTarget = (socket, event) ->
-    Bacon.fromBinder (handler) ->
-      socket.on(event, handler)
-      -> socket.off(event, handler)
-
-  myFrames     = myLines.bufferWithTime(32)
-  socket       = io('/')
-  remoteFrames = fromSocketEventTarget(socket, 'buffer-from-server')
-  remoteLines  = remoteFrames.flatMap(Bacon.fromArray)
-
-  myFrames.assign(socket, 'emit', 'buffer-from-client')
-
-  { remoteLines }
-
-controller = PaintBrushController($('#canvas-container'))
